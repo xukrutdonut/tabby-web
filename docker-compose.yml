@@ -1,23 +1,106 @@
-services:
-    tabby:
-        build: .
-        restart: always
-        depends_on:
-        - db
-        ports:
-        - 9090:80
-        environment:
-        - DATABASE_URL=mysql://root:123@db/tabby
-        - PORT=80
-        - DEBUG=False
-        - DOCKERIZE_ARGS="-wait tcp://db:3306 -timeout 60s"
-        # - APP_DIST_STORAGE="file:///app-dist"
+version: '3.8'
 
-    db:
-        image: mariadb:10.7.1
-        restart: always
-        environment:
-            MARIADB_DATABASE: tabby
-            MARIADB_USER: user
-            MARIADB_PASSWORD: 123
-            MYSQL_ROOT_PASSWORD: 123
+services:
+  tabby:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Optional: specify bundled Tabby version
+        - BUNDLED_TABBY=1.0.187-nightly.1
+    image: tabby-web:latest
+    container_name: tabby-web
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "${TABBY_PORT:-9090}:80"
+    environment:
+      # Database
+      - DATABASE_URL=${DATABASE_URL:-mysql://root:CHANGE_ME@db/tabby}
+      
+      # Django settings
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-CHANGE-ME}
+      - DEBUG=${DEBUG:-False}
+      - PORT=80
+      
+      # Domain configuration for Nginx Proxy Manager
+      - FRONTEND_URL=${FRONTEND_URL:-https://tabby.serviciosylaboratoriodomestico.site}
+      - BACKEND_URL=${BACKEND_URL:-https://tabby.serviciosylaboratoriodomestico.site}
+      - CORS_EXTRA_URL=${CORS_EXTRA_URL:-}
+      
+      # OAuth Authentication (at least one is required)
+      - SOCIAL_AUTH_GITHUB_KEY=${SOCIAL_AUTH_GITHUB_KEY:-}
+      - SOCIAL_AUTH_GITHUB_SECRET=${SOCIAL_AUTH_GITHUB_SECRET:-}
+      - SOCIAL_AUTH_GITLAB_KEY=${SOCIAL_AUTH_GITLAB_KEY:-}
+      - SOCIAL_AUTH_GITLAB_SECRET=${SOCIAL_AUTH_GITLAB_SECRET:-}
+      - SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=${SOCIAL_AUTH_GOOGLE_OAUTH2_KEY:-}
+      - SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=${SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET:-}
+      - SOCIAL_AUTH_MICROSOFT_GRAPH_KEY=${SOCIAL_AUTH_MICROSOFT_GRAPH_KEY:-}
+      - SOCIAL_AUTH_MICROSOFT_GRAPH_SECRET=${SOCIAL_AUTH_MICROSOFT_GRAPH_SECRET:-}
+      
+      # Storage
+      - APP_DIST_STORAGE=${APP_DIST_STORAGE:-file:///app-dist}
+      - NPM_REGISTRY=${NPM_REGISTRY:-https://registry.npmjs.org}
+      
+      # Tabby Connection Gateway (optional)
+      - CONNECTION_GATEWAY_AUTH_CA=${CONNECTION_GATEWAY_AUTH_CA:-}
+      - CONNECTION_GATEWAY_AUTH_CERTIFICATE=${CONNECTION_GATEWAY_AUTH_CERTIFICATE:-}
+      - CONNECTION_GATEWAY_AUTH_KEY=${CONNECTION_GATEWAY_AUTH_KEY:-}
+      
+      # Analytics (optional)
+      - GA_ID=${GA_ID:-}
+      - GA_DOMAIN=${GA_DOMAIN:-}
+      
+      # GitHub Sponsors (optional)
+      - GITHUB_ELIGIBLE_SPONSORSHIPS=${GITHUB_ELIGIBLE_SPONSORSHIPS:-}
+      - GITHUB_SPONSORS_MIN_PAYMENT=${GITHUB_SPONSORS_MIN_PAYMENT:-}
+      
+      # Docker startup
+      - DOCKERIZE_ARGS=${DOCKERIZE_ARGS:--wait tcp://db:3306 -timeout 60s}
+    volumes:
+      # Persist app distributions
+      - app-dist:/app-dist
+      # Optional: mount gateway certificates if using local files
+      # - ./certs:/certs:ro
+    networks:
+      - tabby-network
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: mariadb:10.7.1
+    container_name: tabby-mariadb
+    restart: unless-stopped
+    environment:
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-tabby}
+      - MARIADB_USER=${MARIADB_USER:-user}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD:-CHANGE_ME}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-CHANGE_ME}
+    volumes:
+      # Persist database data
+      - db-data:/var/lib/mysql
+    networks:
+      - tabby-network
+    # Health check
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  db-data:
+    driver: local
+  app-dist:
+    driver: local
+
+networks:
+  tabby-network:
+    driver: bridge

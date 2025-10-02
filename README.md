@@ -28,13 +28,27 @@ You'll need:
 * For SSH and Telnet: a [`tabby-connection-gateway`](https://github.com/Eugeny/tabby-connection-gateway) to forward traffic.
 * Docker BuildKit: `export DOCKER_BUILDKIT=1`
 
+## Basic Setup
+
+1. Copy the environment file and configure it:
 ```bash
-    docker-compose up -e SOCIAL_AUTH_GITHUB_KEY=xxx -e SOCIAL_AUTH_GITHUB_SECRET=yyy
+cp .env.example .env
+nano .env  # Edit with your OAuth credentials and settings
 ```
 
-will start Tabby Web on port 9090 with MariaDB as a storage backend.
+2. Start the services:
+```bash
+export DOCKER_BUILDKIT=1
+docker-compose up -d
+```
+
+This will start Tabby Web on port 9090 with MariaDB as a storage backend.
 
 For SSH and Telnet, once logged in, enter your connection gateway address and auth token in the settings.
+
+## Raspberry Pi 5 Installation
+
+For detailed instructions on installing Tabby Web on Raspberry Pi 5 with Docker behind Nginx Proxy Manager, see [INSTALL_RPI5.md](INSTALL_RPI5.md).
 
 ## Environment variables
 
