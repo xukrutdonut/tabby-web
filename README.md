@@ -53,6 +53,7 @@ For detailed instructions on installing Tabby Web on Raspberry Pi 5 with Docker 
 - **Quick Start**: [QUICKSTART_RPI5.md](QUICKSTART_RPI5.md) - Get started in 5 minutes
 - **Complete Guide**: [INSTALL_RPI5.md](INSTALL_RPI5.md) - Full installation and configuration
 - **Nginx Config**: [NGINX_PROXY_MANAGER_CONFIG.md](NGINX_PROXY_MANAGER_CONFIG.md) - Proxy setup guide
+- **Deployment Checklist**: [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) - Step-by-step verification list
 
 ## Environment variables
 
