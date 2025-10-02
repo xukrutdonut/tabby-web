@@ -233,10 +233,20 @@ if FRONTEND_URL or CORS_EXTRA_URL:
         "x-xsrf-token",
         "x-requested-with",
     ]
-    cors_domain = urlparse(cors_url).hostname
-    CSRF_TRUSTED_ORIGINS = [cors_domain]
+    # Django 4.0+ requires scheme://hostname format for CSRF_TRUSTED_ORIGINS
+    parsed_url = urlparse(cors_url)
+    cors_origin = f"{parsed_url.scheme}://{parsed_url.hostname}"
+    if parsed_url.port and parsed_url.port not in (80, 443):
+        cors_origin += f":{parsed_url.port}"
+    CSRF_TRUSTED_ORIGINS = [cors_origin]
+    
     if BACKEND_URL:
-        CSRF_TRUSTED_ORIGINS.append(urlparse(BACKEND_URL).hostname)
+        parsed_backend = urlparse(BACKEND_URL)
+        backend_origin = f"{parsed_backend.scheme}://{parsed_backend.hostname}"
+        if parsed_backend.port and parsed_backend.port not in (80, 443):
+            backend_origin += f":{parsed_backend.port}"
+        if backend_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(backend_origin)
 
     cors_url = cors_url.rstrip("/")
 
