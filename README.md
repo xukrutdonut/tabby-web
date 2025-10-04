@@ -16,7 +16,7 @@ Tabby Web serves the [Tabby Terminal](https://github.com/Eugeny/tabby) as a web 
 
 # Requirements
 
-* Python 3.7+
+* Python 3.9+
 * A database server supported by Django (MariaDB, Postgres, SQLite, etc.)
 * Storage for distribution files - local, S3, GCS or others supported by `fsspec`
 
