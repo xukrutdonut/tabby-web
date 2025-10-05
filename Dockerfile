@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:12-alpine AS frontend-build
+FROM node:16-alpine AS frontend-build
 WORKDIR /app
 COPY frontend/package.json frontend/yarn.lock ./
 RUN yarn install --frozen-lockfile --network-timeout 1000000
@@ -10,7 +10,7 @@ COPY frontend/theme theme
 RUN yarn run build
 RUN yarn run build:server
 
-FROM node:12-alpine AS frontend
+FROM node:16-alpine AS frontend
 WORKDIR /app
 COPY --from=frontend-build /app/build build
 COPY --from=frontend-build /app/build-server build-server
@@ -20,7 +20,7 @@ CMD ["npm", "start"]
 
 # ----
 
-FROM python:3.7-alpine AS build-backend
+FROM python:3.9-alpine AS build-backend
 ARG EXTRA_DEPS
 
 RUN apk add build-base musl-dev libffi-dev openssl-dev mariadb-dev bash curl
@@ -48,7 +48,7 @@ RUN APP_DIST_STORAGE=file:///app-dist /venv/*/bin/python ./manage.py add_version
 
 # ----
 
-FROM python:3.7-alpine AS backend
+FROM python:3.9-alpine AS backend
 
 ENV APP_DIST_STORAGE file:///app-dist
 ENV DOCKERIZE_VERSION v0.6.1
